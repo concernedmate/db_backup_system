@@ -1,0 +1,11 @@
+{
+  "name": "backup_system",
+  "version": "1.0.0",
+  "description": "mysql backup system using ssh keys or straight up login",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "afif_azizy",
+  "license": "ISC"
+}

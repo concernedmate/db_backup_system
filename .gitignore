@@ -1,0 +1,6 @@
+!backup/.gitignore
+backup/*
+
+/config.js
+
+node_modules
