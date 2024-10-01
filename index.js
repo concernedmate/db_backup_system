@@ -6,8 +6,8 @@ const readline = require('readline')
 const { SystemEntity, MySQLConfig, SSHConfig } = require('./entities')
 
 const clearLastLine = () => {
-    readline.moveCursor(process.stdout, 0, -1) // up one line
-    readline.clearLine(process.stdout, 1) // from cursor to end
+    readline.moveCursor(process.stdout, 0, -1)  // up one line
+    readline.clearLine(process.stdout, 1)       // from cursor to end
 }
 
 const read_args = () => {
@@ -26,9 +26,15 @@ const read_args = () => {
             }
             case 'only': {
                 for (let i = 3; i < read.length; i++) {
-                    process_db.push(system_configs.find((val) => {
-                        return val.system_name == read[i]
-                    }))
+                    process_db.push(system_configs.find((val) => { return val.system_name == read[i] }))
+                }
+                break;
+            }
+            case 'except': {
+                for (let i = 3; i < read.length; i++) {
+                    if (system_configs.find((val) => { return val.system_name == read[i] }) == undefined) {
+                        process_db.push(read[i])
+                    }
                 }
                 break;
             }
@@ -59,6 +65,8 @@ const read_args = () => {
 const backup = async (ssh_config, mysql_config, dir) => {
     const date = new Date();
     const datetime = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, "0")}-${date.getDate().toString().padStart(2, "0")}`;
+    date.setDate(date.getDate()-1)
+    const yesterday = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, "0")}-${date.getDate().toString().padStart(2, "0")}`;
 
     let cmd = ``
     cmd += `ssh -i ${ssh_config.ssh_key_path} ${ssh_config.ssh_host} ${ssh_config.port == null ? '' : `-p ${ssh_config.port}`} `
@@ -81,7 +89,7 @@ const backup = async (ssh_config, mysql_config, dir) => {
     const pipe = child_process.exec(pipecmd)
 
     console.log(`Piping bak_${datetime}.sql to local server...`)
-    return new Promise((resolve, reject) => {
+    await new Promise((resolve, reject) => {
         pipe.stdout.on('error', (error) => {
             reject(error);
         });
@@ -91,6 +99,17 @@ const backup = async (ssh_config, mysql_config, dir) => {
             resolve()
         });
     })
+
+    let cleanupcmd = ``
+    cleanupcmd += `ssh -i ${ssh_config.ssh_key_path} ${ssh_config.ssh_host} ${ssh_config.port == null ? '' : `-p ${ssh_config.port}`} `
+    cleanupcmd += `"rm bak_${yesterday}.sql"`
+    const cleanup = child_process.exec(cleanupcmd)
+    await new Promise((resolve, reject) => {
+        cleanup.stdout.on('error', (error) => { reject(error); });
+        cleanup.stdout.on('finish', () => { resolve() });
+    })
+
+    return;
 }
 
 /**
