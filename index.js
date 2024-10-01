@@ -67,14 +67,11 @@ const backup = async (ssh_config, mysql_config, dir) => {
     const dump = child_process.exec(cmd)
     const wstream = fs.createWriteStream(path.join(dir, `bak_${datetime}.sql`));
 
-    console.log('Start backup...')
+    console.log(`Start backup ${mysql_config.database}...`)
     return new Promise((resolve, reject) => {
         // we pipe manual
-        let written = 0;
         dump.stdout.on('data', (data) => {
-            wstream.write(data, () => {
-                written += data.length;
-            });
+            wstream.write(data);
         })
         dump.stdout.on('error', (error) => {
             reject(`Error!: ${error}`);
@@ -82,7 +79,7 @@ const backup = async (ssh_config, mysql_config, dir) => {
         dump.stdout.on('finish', () => {
             resolve();
             clearLastLine()
-            console.log(`Schema ${mysql_config.database} processed: ${written}`);
+            console.log(`Schema ${mysql_config.database} processed`);
         });
     })
 }
