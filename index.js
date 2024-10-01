@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const child_process = require('child_process');
-const { system_configs } = require('./config');
+const { system_configs } = require('./config.js');
 const { SystemEntity, MySQLConfig, SSHConfig } = require('./entities')
 
 const read_args = () => {
