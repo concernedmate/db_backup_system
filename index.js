@@ -2,7 +2,13 @@ const fs = require('fs');
 const path = require('path');
 const child_process = require('child_process');
 const { system_configs } = require('./config.js');
+const readline = require('readline')
 const { SystemEntity, MySQLConfig, SSHConfig } = require('./entities')
+
+const clearLastLine = () => {
+    readline.moveCursor(process.stdout, 0, -1) // up one line
+    readline.clearLine(process.stdout, 1) // from cursor to end
+}
 
 const read_args = () => {
     /**
@@ -16,10 +22,6 @@ const read_args = () => {
         switch (sliced) {
             case 'all': {
                 process_db = system_configs
-                console.log(`Processing all configs:`)
-                for (let i = 0; i < process_db.length; i++) {
-                    console.log(`${i}.`, process_db[i].system_name)
-                }
                 break;
             }
             case 'only': {
@@ -37,6 +39,11 @@ const read_args = () => {
     } else {
         console.log("Arguments needed!")
         process.exit()
+    }
+
+    console.log(`Processing configs:`)
+    for (let i = 0; i < process_db.length; i++) {
+        console.log(`${i}.`, process_db[i].system_name)
     }
 
     return process_db
@@ -60,13 +67,13 @@ const backup = async (ssh_config, mysql_config, dir) => {
     const dump = child_process.exec(cmd)
     const wstream = fs.createWriteStream(path.join(dir, `bak_${datetime}.sql`));
 
+    console.log('Start backup...')
     return new Promise((resolve, reject) => {
         // we pipe manual
         let written = 0;
         dump.stdout.on('data', (data) => {
             wstream.write(data, () => {
                 written += data.length;
-                console.log(`Schema ${mysql_config.database} processed: ${written}`);
             });
         })
         dump.stdout.on('error', (error) => {
@@ -74,6 +81,8 @@ const backup = async (ssh_config, mysql_config, dir) => {
         });
         dump.stdout.on('finish', () => {
             resolve();
+            clearLastLine()
+            console.log(`Schema ${mysql_config.database} processed: ${written}`);
         });
     })
 }
