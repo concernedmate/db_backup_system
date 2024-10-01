@@ -62,24 +62,33 @@ const backup = async (ssh_config, mysql_config, dir) => {
 
     let cmd = ``
     cmd += `ssh -i ${ssh_config.ssh_key_path} ${ssh_config.ssh_host} ${ssh_config.port == null ? '' : `-p ${ssh_config.port}`} `
-    cmd += `"mysqldump -P ${mysql_config.port} -u ${mysql_config.user} -p${mysql_config.password} ${mysql_config.database} --no-tablespaces --single-transaction" `
+    cmd += `"mysqldump -P ${mysql_config.port} -u ${mysql_config.user} -p${mysql_config.password} ${mysql_config.database} --no-tablespaces --single-transaction > bak_${datetime}.sql"`
 
     const dump = child_process.exec(cmd)
-    const wstream = fs.createWriteStream(path.join(dir, `bak_${datetime}.sql`));
-
-    console.log(`Start backup ${mysql_config.database}...`)
-    return new Promise((resolve, reject) => {
-        // we pipe manual
-        dump.stdout.on('data', (data) => {
-            wstream.write(data);
-        })
+    await new Promise((resolve, reject) => {
         dump.stdout.on('error', (error) => {
-            reject(`Error!: ${error}`);
+            reject(error);
         });
         dump.stdout.on('finish', () => {
-            resolve();
+            console.log(`Backup ${mysql_config.database} on ${ssh_config.ssh_host} done`)
+            resolve()
+        });
+    })
+
+
+    let pipecmd = ``
+    pipecmd += `scp -i ${ssh_config.ssh_key_path} ${ssh_config.port == null ? '' : `-P ${ssh_config.port}`} ${ssh_config.ssh_host}:bak_${datetime}.sql ${path.join(dir, `bak_${datetime}.sql`)}`
+    const pipe = child_process.exec(pipecmd)
+
+    console.log(`Piping bak_${datetime}.sql to local server...`)
+    return new Promise((resolve, reject) => {
+        pipe.stdout.on('error', (error) => {
+            reject(error);
+        });
+        pipe.stdout.on('finish', () => {
             clearLastLine()
-            console.log(`Schema ${mysql_config.database} processed`);
+            console.log(`Backup ${mysql_config.database} finished piping to ${path.join(dir, `bak_${datetime}.sql`)}`)
+            resolve()
         });
     })
 }
