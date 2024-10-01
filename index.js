@@ -61,7 +61,6 @@ const backup = async (ssh_config, mysql_config, dir) => {
         dump.stdout.on('data', (data) => {
             wstream.write(data, () => {
                 written += data.length;
-                console.log(`\x1B[2J\x1B[H`) // clear console
                 console.log(`Schema ${mysql_config.database} processed: ${written}`);
             });
         })
@@ -80,6 +79,7 @@ const backup = async (ssh_config, mysql_config, dir) => {
  * @returns {Promise<void>}
  */
 const start_backup = async (systems) => {
+    console.log(`\x1B[2J\x1B[H`) // clear console
     const generated = []
     for (let idx = 0; idx < systems.length; idx++) {
         const system = systems[idx]
