@@ -8,13 +8,18 @@ const read_args = () => {
     /**
      * @type {SystemEntity[]}
      */
+    console.log(`\x1B[2J\x1B[H`) // clear console
     let process_db = []
     const read = process.argv;
-    if (read[2][0] == '-') {
+    if (read[2].length > 0 && read[2][0] == '-') {
         const sliced = read[2].slice(1)
         switch (sliced) {
             case 'all': {
                 process_db = system_configs
+                console.log(`Processing all configs:`)
+                for (let i = 0; i < process_db.length; i++) {
+                    console.log(`${i}.`, process_db[i].system_name)
+                }
                 break;
             }
             case 'only': {
@@ -79,7 +84,6 @@ const backup = async (ssh_config, mysql_config, dir) => {
  * @returns {Promise<void>}
  */
 const start_backup = async (systems) => {
-    console.log(`\x1B[2J\x1B[H`) // clear console
     const generated = []
     for (let idx = 0; idx < systems.length; idx++) {
         const system = systems[idx]
