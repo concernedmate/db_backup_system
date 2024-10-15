@@ -17,6 +17,9 @@ const executeScript = (script) => {
             dump.stderr.on('data', (data) => {
                 console.log("executeScript stderr: ", data.toString())
             });
+            dump.on('error', (err) => {
+                reject(`Errorred with exit code ${code}`)
+            })
             dump.on('close', (code) => {
                 if (code != 0) { reject(`Errorred with exit code ${code}`) }
                 resolve(`Done with exit code ${code}`)
