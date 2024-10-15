@@ -1,5 +1,5 @@
-
 const { SystemEntity, MySQLConfig, SSHConfig } = require('./entities')
+const callbacks = require('./callbacks')
 
 /**
  * @type {SystemEntity[]}
@@ -8,6 +8,7 @@ const system_configs = [
     new SystemEntity({
         system_name: "example",
         type: 'SSH',
+        callback: callbacks.executeScript("echo :bak"),
         mysql_config: new MySQLConfig({
             user: 'example_uid',
             password: 'example_pw',

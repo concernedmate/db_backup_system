@@ -1,9 +1,15 @@
 class SystemEntity {
     /**
      * 
-     * @param {{ type: 'CONN' | 'SSH', mysql_config: MySQLConfig, ssh_config: SSHConfig, system_name: string }} object 
+     * @param {{ 
+     *  type: 'CONN' | 'SSH', 
+     *  mysql_config: MySQLConfig, 
+     *  ssh_config: SSHConfig, 
+     *  system_name: string,
+     *  callback?: (file: string)=>{} 
+     * }} object 
      */
-    constructor(object = { type: null, mysql_config: null, ssh_config: null, system_name: null }) {
+    constructor(object = { type: null, mysql_config: null, ssh_config: null, system_name: null, callback: null }) {
         try {
             if (object.system_name == null || object.type == null) { throw new Error("Null object property") }
             if (object.mysql_config == null) { throw new Error("Null object property") }
@@ -11,6 +17,7 @@ class SystemEntity {
             this.mysql_config = object.mysql_config
             this.system_name = object.system_name
             this.type = object.type
+            this.callback = object.callback
             if (object.type == 'SSH') {
                 if (object.ssh_config == null) { throw new Error("Null object property") }
                 this.ssh_config = object.ssh_config

@@ -60,19 +60,19 @@ const read_args = () => {
  * @param {SSHConfig} ssh_config 
  * @param {MySQLConfig} mysql_config 
  * @param {string} dir
- * @returns {Promise<void>}
+ * @returns {Promise<string>}
  */
 const backup = async (ssh_config, mysql_config, dir) => {
     const date = new Date();
     const datetime = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, "0")}-${date.getDate().toString().padStart(2, "0")}`;
-    date.setDate(date.getDate()-1)
+    date.setDate(date.getDate() - 1)
     const yesterday = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, "0")}-${date.getDate().toString().padStart(2, "0")}`;
 
     let cmd = ``
     cmd += `ssh -i ${ssh_config.ssh_key_path} ${ssh_config.ssh_host} ${ssh_config.port == null ? '' : `-p ${ssh_config.port}`} `
     cmd += `"mysqldump -P ${mysql_config.port} -u ${mysql_config.user} -p${mysql_config.password} ${mysql_config.database} --no-tablespaces --single-transaction > bak_${datetime}.sql"`
 
-    const dump = child_process.exec(cmd)
+    const dump = child_process.spawn(cmd)
     await new Promise((resolve, reject) => {
         dump.stdout.on('error', (error) => {
             reject(error);
@@ -86,7 +86,7 @@ const backup = async (ssh_config, mysql_config, dir) => {
 
     let pipecmd = ``
     pipecmd += `scp -i ${ssh_config.ssh_key_path} ${ssh_config.port == null ? '' : `-P ${ssh_config.port}`} ${ssh_config.ssh_host}:bak_${datetime}.sql ${path.join(dir, `bak_${datetime}.sql`)}`
-    const pipe = child_process.exec(pipecmd)
+    const pipe = child_process.spawn(pipecmd)
 
     console.log(`Piping bak_${datetime}.sql to local server...`)
     await new Promise((resolve, reject) => {
@@ -103,13 +103,13 @@ const backup = async (ssh_config, mysql_config, dir) => {
     let cleanupcmd = ``
     cleanupcmd += `ssh -i ${ssh_config.ssh_key_path} ${ssh_config.ssh_host} ${ssh_config.port == null ? '' : `-p ${ssh_config.port}`} `
     cleanupcmd += `"rm bak_${yesterday}.sql"`
-    const cleanup = child_process.exec(cleanupcmd)
+    const cleanup = child_process.spawn(cleanupcmd)
     await new Promise((resolve, reject) => {
         cleanup.stdout.on('error', (error) => { reject(error); });
         cleanup.stdout.on('finish', () => { resolve() });
     })
 
-    return;
+    return path.join(dir, `bak_${datetime}.sql`);
 }
 
 /**
@@ -128,11 +128,12 @@ const start_backup = async (systems) => {
             }
 
             try {
-                await backup(
+                bak_path = await backup(
                     system.ssh_config,
                     system.mysql_config,
                     path.join(__dirname, 'backup', system.system_name)
                 );
+                system.callback(path)
                 generated.push(system.system_name);
             } catch (error) {
                 console.log(`Failed to generate backup for: ${system.system_name}`, error);
