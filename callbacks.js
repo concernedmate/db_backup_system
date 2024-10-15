@@ -7,9 +7,13 @@ const child_process = require('child_process');
  */
 const executeScript = (script) => {
     return async (bak) => {
+        console.log(`Running executeScript for ${bak}...`)
         const dump = child_process.exec(script.replaceAll(":bak", bak))
 
         await new Promise((resolve, reject) => {
+            dump.stdout.on('data', (data) => {
+                console.log(data)
+            })
             dump.stdout.on('error', (error) => {
                 reject(error);
             });
