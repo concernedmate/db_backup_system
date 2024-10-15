@@ -133,7 +133,7 @@ const start_backup = async (systems) => {
                     system.mysql_config,
                     path.join(__dirname, 'backup', system.system_name)
                 );
-                if (system.callback != null) { system.callback(path) }
+                if (system.callback != null) { try { console.log(system.callback(bak_path)) } catch (err) { console.log(err) } }
                 generated.push(system.system_name);
             } catch (error) {
                 console.log(`Failed to generate backup for: ${system.system_name}`, error);

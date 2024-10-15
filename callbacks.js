@@ -8,18 +8,18 @@ const child_process = require('child_process');
 const executeScript = (script) => {
     return async (bak) => {
         console.log(`Running executeScript for ${bak}...`)
-        const dump = child_process.exec(script.replaceAll(":bak", bak))
+        const dump = child_process.spawn(script.replaceAll(":bak", bak))
 
         await new Promise((resolve, reject) => {
             dump.stdout.on('data', (data) => {
-                console.log(data)
+                console.log("executeScript stdout: ", data.toString())
             })
-            dump.stdout.on('error', (error) => {
-                reject(error);
+            dump.stderr.on('data', (data) => {
+                console.log("executeScript stderr: ", data.toString())
             });
-            dump.stdout.on('finish', () => {
-                console.log(`Done callback for ${bak}`)
-                resolve()
+            dump.on('close', (code) => {
+                if (code != 0) { reject(`Errorred with exit code ${code}`) }
+                resolve(`Done with exit code ${code}`)
             });
         })
     }
