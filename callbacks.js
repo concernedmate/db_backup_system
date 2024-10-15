@@ -18,7 +18,7 @@ const executeScript = (script) => {
                 console.log("executeScript stderr: ", data.toString())
             });
             dump.on('error', (err) => {
-                reject(`Errorred with exit code ${code}`)
+                reject(`Errorred: ${err}`)
             })
             dump.on('close', (code) => {
                 if (code != 0) { reject(`Errorred with exit code ${code}`) }
