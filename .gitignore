@@ -1,4 +1,5 @@
 !backup/.gitignore
 backup/*
+keys/*
 
 node_modules

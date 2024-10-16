@@ -8,14 +8,37 @@ const child_process = require('child_process');
 const executeScript = (script) => {
     return async (bak) => {
         console.log(`Running executeScript for ${bak}...`)
-        const dump = child_process.spawn(script.replaceAll(":bak", bak))
+
+        const arr = script.replaceAll(":bak", bak).split(" ")
+        if (arr.length == 0) { throw new Error("Invalid script") }
+
+        const params = []
+        let temp = []
+        for (let i = 1; i < arr.length; i++) {
+            if (arr[i].at(0) == `"`) {
+                temp.push(arr[i])
+            } else {
+                if (temp.length != 0) {
+                    temp.push(arr[i])
+                    if (arr[i].at(-1) == `"`) {
+                        params.push(temp.join(" "))
+                        temp = []
+                    }
+                } else {
+                    params.push(arr[i])
+                }
+            }
+        }
+        if (temp.length > 0) { throw new Error("Invalid script") }
+
+        const dump = child_process.spawn(arr[0], params)
 
         await new Promise((resolve, reject) => {
             dump.stdout.on('data', (data) => {
-                console.log("executeScript stdout: ", data.toString())
+                console.log(data.toString())
             })
             dump.stderr.on('data', (data) => {
-                console.log("executeScript stderr: ", data.toString())
+                console.log(data.toString())
             });
             dump.on('error', (err) => {
                 reject(`Errorred: ${err}`)

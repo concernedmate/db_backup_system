@@ -122,22 +122,39 @@ const start_backup = async (systems) => {
     for (let idx = 0; idx < systems.length; idx++) {
         const system = systems[idx]
 
-        if (system.type == 'SSH') {
-            if (!fs.existsSync(path.join(__dirname, 'backup', system.system_name))) {
-                fs.mkdirSync(path.join(__dirname, 'backup', system.system_name), { recursive: true })
+        switch (system.type) {
+            case 'SSH': {
+                if (!fs.existsSync(path.join(__dirname, 'backup', system.system_name))) {
+                    fs.mkdirSync(path.join(__dirname, 'backup', system.system_name), { recursive: true })
+                }
+
+                try {
+                    bak_path = await backup(
+                        system.ssh_config,
+                        system.mysql_config,
+                        path.join(__dirname, 'backup', system.system_name)
+                    );
+
+                    if (system.callback != null) {
+                        try { await system.callback(bak_path) } catch (err) { console.log(err) }
+                    }
+
+                    generated.push(system.system_name);
+                } catch (error) {
+                    console.log(`Failed to generate backup for: ${system.system_name}`, error);
+                }
+                break;
             }
 
-            try {
-                bak_path = await backup(
-                    system.ssh_config,
-                    system.mysql_config,
-                    path.join(__dirname, 'backup', system.system_name)
-                );
-                if (system.callback != null) { try { console.log(await system.callback(bak_path)) } catch (err) { console.log(err) } }
-                generated.push(system.system_name);
-            } catch (error) {
-                console.log(`Failed to generate backup for: ${system.system_name}`, error);
+            case 'CONN': {
+                // TODO
+                console.log('Not implemented!')
+                break;
             }
+
+            default:
+                console.log('Invalid system type')
+                break;
         }
     }
 
