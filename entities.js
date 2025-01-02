@@ -6,7 +6,7 @@ class SystemEntity {
      *  mysql_config: MySQLConfig, 
      *  ssh_config: SSHConfig, 
      *  system_name: string,
-     *  callback?: (file: string)=>{} 
+     *  callback?: (file: string)=>Promise<any> 
      * }} object 
      */
     constructor(object = { type: null, mysql_config: null, ssh_config: null, system_name: null, callback: null }) {
@@ -51,16 +51,18 @@ class SSHConfig {
 class MySQLConfig {
     /**
      * 
-     * @param {{ user: string, password: string, database: string, host: string, port: number }} object 
+     * @param {{ user: string, password: string, database: string, host: string, port: number, mysqldump: string }} object 
      */
-    constructor(object = { user: null, password: null, database: null, host: null, port: null }) {
+    constructor(object = { user: null, password: null, database: null, host: null, port: null, mysqldump: null }) {
         try {
             if (object.user == null, object.password == null, object.database == null, object.host == null, object.port == null) { throw new Error("Null object property") }
+            if (object.mysqldump == null) { object.mysqldump = 'mysqldump' }
             this.user = object.user
             this.password = object.password
             this.database = object.database
             this.host = object.host
             this.port = object.port
+            this.mysqldump = object.mysqldump
         } catch (error) {
             console.log("Invalid config on one or more system!", error.message)
             process.exit()

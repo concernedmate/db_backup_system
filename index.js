@@ -70,7 +70,7 @@ const backup = async (ssh_config, mysql_config, dir) => {
 
     let cmd = ``
     cmd += `ssh -i ${ssh_config.ssh_key_path} ${ssh_config.ssh_host} ${ssh_config.port == null ? '' : `-p ${ssh_config.port}`} `
-    cmd += `"mysqldump -P ${mysql_config.port} -u ${mysql_config.user} -p${mysql_config.password} ${mysql_config.database} --no-tablespaces --single-transaction > bak_${datetime}.sql"`
+    cmd += `"${mysql_config.mysqldump} -P ${mysql_config.port} -u ${mysql_config.user} -p${mysql_config.password} ${mysql_config.database} --no-tablespaces --single-transaction > bak_${datetime}.sql"`
 
     const dump = child_process.exec(cmd)
     await new Promise((resolve, reject) => {
@@ -129,7 +129,7 @@ const start_backup = async (systems) => {
                 }
 
                 try {
-                    bak_path = await backup(
+                    const bak_path = await backup(
                         system.ssh_config,
                         system.mysql_config,
                         path.join(__dirname, 'backup', system.system_name)
