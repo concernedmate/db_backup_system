@@ -32,12 +32,11 @@ class SystemEntity {
 class SSHConfig {
     /**
      * 
-     * @param {{ ssh_key_path: string, mysqldump_path: string, ssh_host: string, port: number }} object 
+     * @param {{ ssh_key_path: string, ssh_host: string, port: number }} object 
      */
-    constructor(object = { ssh_key_path: null, mysqldump_path: null, ssh_host: null, port: null }) {
+    constructor(object = { ssh_key_path: null, ssh_host: null, port: null }) {
         try {
-            if (object.mysqldump_path == null || object.ssh_host == null || object.ssh_key_path == null) { throw new Error("Null object property") }
-            this.mysqldump_path = object.mysqldump_path
+            if (object.ssh_host == null || object.ssh_key_path == null) { throw new Error("Null object property") }
             this.ssh_key_path = object.ssh_key_path
             this.ssh_host = object.ssh_host
             this.port = object.port
