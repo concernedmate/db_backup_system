@@ -57,12 +57,14 @@ const read_args = () => {
 
 /**
  * 
- * @param {SSHConfig} ssh_config 
- * @param {MySQLConfig} mysql_config 
+ * @param {SystemEntity} system 
  * @param {string} dir
  * @returns {Promise<string>}
  */
-const backup = async (ssh_config, mysql_config, dir) => {
+const backup = async (system, dir) => {
+    const ssh_config = system.ssh_config
+    const mysql_config = system.mysql_config
+
     const date = new Date();
     const datetime = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, "0")}-${date.getDate().toString().padStart(2, "0")}`;
     date.setDate(date.getDate() - 1)
@@ -70,7 +72,8 @@ const backup = async (ssh_config, mysql_config, dir) => {
 
     let cmd = ``
     cmd += `ssh -i ${ssh_config.ssh_key_path} ${ssh_config.ssh_host} ${ssh_config.port == null ? '' : `-p ${ssh_config.port}`} `
-    cmd += `"${mysql_config.mysqldump} -P ${mysql_config.port} -u ${mysql_config.user} -p${mysql_config.password} ${mysql_config.database} --no-tablespaces --single-transaction > bak_${datetime}.sql"`
+    cmd += `"${mysql_config.mysqldump} -P ${mysql_config.port} -u ${mysql_config.user} -p${mysql_config.password} ${mysql_config.database}`
+    cmd += `--no-tablespaces --single-transaction > bak_${system.system_name}_${datetime}.sql"`
 
     const dump = child_process.exec(cmd)
     await new Promise((resolve, reject) => {
@@ -85,17 +88,17 @@ const backup = async (ssh_config, mysql_config, dir) => {
 
 
     let pipecmd = ``
-    pipecmd += `scp -i ${ssh_config.ssh_key_path} ${ssh_config.port == null ? '' : `-P ${ssh_config.port}`} ${ssh_config.ssh_host}:bak_${datetime}.sql ${path.join(dir, `bak_${datetime}.sql`)}`
+    pipecmd += `scp -i ${ssh_config.ssh_key_path} ${ssh_config.port == null ? '' : `-P ${ssh_config.port}`} ${ssh_config.ssh_host}:bak_${system.system_name}_${datetime}.sql ${path.join(dir, `bak_${system.system_name}_${datetime}.sql`)}`
     const pipe = child_process.exec(pipecmd)
 
-    console.log(`Piping bak_${datetime}.sql to local server...`)
+    console.log(`Piping bak_${system.system_name}_${datetime}.sql to local server...`)
     await new Promise((resolve, reject) => {
         pipe.stdout.on('error', (error) => {
             reject(error);
         });
         pipe.stdout.on('finish', () => {
             clearLastLine()
-            console.log(`Backup ${mysql_config.database} finished piping to ${path.join(dir, `bak_${datetime}.sql`)}`)
+            console.log(`Backup ${mysql_config.database} finished piping to ${path.join(dir, `bak_${system.system_name}_${datetime}.sql`)}`)
             resolve()
         });
     })
@@ -109,7 +112,7 @@ const backup = async (ssh_config, mysql_config, dir) => {
         cleanup.stdout.on('finish', () => { resolve() });
     })
 
-    return path.join(dir, `bak_${datetime}.sql`);
+    return path.join(dir, `bak_${system.system_name}_${datetime}.sql`);
 }
 
 /**
@@ -129,11 +132,7 @@ const start_backup = async (systems) => {
                 }
 
                 try {
-                    const bak_path = await backup(
-                        system.ssh_config,
-                        system.mysql_config,
-                        path.join(__dirname, 'backup', system.system_name)
-                    );
+                    const bak_path = await backup(system, path.join(__dirname, 'backup', system.system_name));
 
                     if (system.callback != null) {
                         try { await system.callback(bak_path) } catch (err) { console.log(err) }
