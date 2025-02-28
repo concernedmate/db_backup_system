@@ -3,7 +3,7 @@ const path = require('path');
 const child_process = require('child_process');
 const { system_configs } = require('./config.js');
 const readline = require('readline')
-const { SystemEntity, MySQLConfig, SSHConfig } = require('./entities')
+const { SystemEntity } = require('./entities')
 
 const clearLastLine = () => {
     readline.moveCursor(process.stdout, 0, -1)  // up one line
@@ -15,20 +15,19 @@ const read_args = () => {
      * @type {SystemEntity[]}
      */
     console.log(`\x1B[2J\x1B[H`) // clear console
-    let process_db = []
+    const process_db = []
     const read = process.argv;
     if (read[2].length > 0 && read[2][0] == '-') {
         const sliced = read[2].slice(1)
         switch (sliced) {
             case 'all': {
-                process_db = system_configs
-                break;
+                return {arg: sliced, systems: system_configs}
             }
             case 'only': {
                 for (let i = 3; i < read.length; i++) {
                     process_db.push(system_configs.find((val) => { return val.system_name == read[i] }))
                 }
-                break;
+                return {arg: sliced, systems: process_db}
             }
             case 'except': {
                 for (let i = 3; i < read.length; i++) {
@@ -36,7 +35,14 @@ const read_args = () => {
                         process_db.push(read[i])
                     }
                 }
-                break;
+                return {arg: sliced, systems: process_db}
+            }
+            case 'ls': {
+                console.log('Systems List:')
+                for (let i = 0; i < system_configs.length; i++) {
+                    console.log(`${i + 1}. ${system_configs[i].system_name}`)
+                }
+                return {arg: sliced, systems: []}
             }
             default:
                 console.log("Arguments unknown!")
@@ -46,13 +52,6 @@ const read_args = () => {
         console.log("Arguments needed!")
         process.exit()
     }
-
-    console.log(`Processing configs:`)
-    for (let i = 0; i < process_db.length; i++) {
-        console.log(`${i}.`, process_db[i].system_name)
-    }
-
-    return process_db
 }
 
 /**
@@ -121,6 +120,11 @@ const backup = async (system, dir) => {
  * @returns {Promise<void>}
  */
 const start_backup = async (systems) => {
+    console.log(`Processing configs:`)
+    for (let i = 0; i < systems.length; i++) {
+        console.log(`${i}.`, systems[i].system_name)
+    }
+
     const generated = []
     for (let idx = 0; idx < systems.length; idx++) {
         const system = systems[idx]
@@ -161,4 +165,8 @@ const start_backup = async (systems) => {
     process.exit();
 }
 
-start_backup(read_args())
+// START TOOL
+const result = read_args()
+if (result.arg != 'ls'){
+    start_backup(result.systems)
+}
