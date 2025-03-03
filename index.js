@@ -104,7 +104,7 @@ const backup = async (system, dir) => {
 
     let cleanupcmd = ``
     cleanupcmd += `ssh -i ${ssh_config.ssh_key_path} ${ssh_config.ssh_host} ${ssh_config.port == null ? '' : `-p ${ssh_config.port}`} `
-    cleanupcmd += `"rm bak_${yesterday}.sql"`
+    cleanupcmd += `"rm bak_${system.system_name}_${yesterday}.sql"`
     const cleanup = child_process.exec(cleanupcmd)
     await new Promise((resolve, reject) => {
         cleanup.stdout.on('error', (error) => { reject(error); });
