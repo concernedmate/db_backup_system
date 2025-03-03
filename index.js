@@ -71,7 +71,7 @@ const backup = async (system, dir) => {
 
     let cmd = ``
     cmd += `ssh -i ${ssh_config.ssh_key_path} ${ssh_config.ssh_host} ${ssh_config.port == null ? '' : `-p ${ssh_config.port}`} `
-    cmd += `"${mysql_config.mysqldump} -P ${mysql_config.port} -u ${mysql_config.user} -p${mysql_config.password} ${mysql_config.database}`
+    cmd += `"${mysql_config.mysqldump} -P ${mysql_config.port} -u ${mysql_config.user} -p${mysql_config.password} ${mysql_config.database} `
     cmd += `--no-tablespaces --single-transaction > bak_${system.system_name}_${datetime}.sql"`
 
     const dump = child_process.exec(cmd)
